@@ -17,6 +17,7 @@ from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.wrappers.scikit_learn import KerasClassifier
 from keras.callbacks import EarlyStopping
+import pickle
 
 early_stopping_monitor = EarlyStopping(patience=3)
 
@@ -62,6 +63,11 @@ from keras.preprocessing.text import Tokenizer
 tokenizer = Tokenizer(num_words=5000)
 tokenizer.fit_on_texts(sentences_train)
 
+# saving
+with open('./data/tokenizer.pickle', 'wb') as handle:
+    pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
 X_train = tokenizer.texts_to_sequences(sentences_train)
 X_test = tokenizer.texts_to_sequences(sentences_test)
 
@@ -82,8 +88,6 @@ maxlen = 100
 
 X_train = pad_sequences(X_train, padding='post', maxlen=maxlen)
 X_test = pad_sequences(X_test, padding='post', maxlen=maxlen)
-
-print(X_train[0, :])
 
 from keras.models import Sequential
 from keras import layers
@@ -115,8 +119,17 @@ loss, accuracy = model.evaluate(X_test, y_test, verbose=False)
 print("Testing Accuracy:  {:.4f}".format(accuracy))
 
 
+# serialize model to JSON
+model_json = model.to_json()
+with open("./data/model.json", "w") as json_file:
+    json_file.write(model_json)
+# serialize weights to HDF5
+model.save_weights("./data/model.h5")
+print("Saved model to disk")
+ 
+
 #test using new data
-sentence_test = ["this is good, yes, so good", "I love it so much", "I believe its ok, great","hate it with all my soul", "not a good experience, real bad", "so bad wrong no no please worst thing ever"]
+sentence_test = ["this is good, yes, so good", "I love it so much", "I believe its ok, great, beautiful","hate it with all my soul, boring", "not a good experience, real bad", "so bad wrong no no please worst thing ever"]
 xnew = tokenizer.texts_to_sequences(sentence_test)
 xnew = pad_sequences(xnew, padding='post', maxlen=maxlen)
 
